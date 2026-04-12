@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
+	"patterns/cache"
 	"patterns/ratecounter"
 	"time"
 )
@@ -18,6 +19,8 @@ func main() {
 			log.Fatalf("Pprof server failed: %v", err)
 		}
 	}()
+
+	fmt.Println("Rate counter run")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -42,4 +45,22 @@ func main() {
 		fmt.Printf("Alert: %d errors", v)
 		fmt.Println()
 	}
+
+	fmt.Println("Cache run")
+
+	c := cache.NewCache()
+	c.Set("num1", 12, 3*time.Second)
+	fmt.Println("cache set check")
+	fmt.Println(*c.Get("num1") == 12)
+
+	time.Sleep(4 * time.Second)
+	fmt.Println("expired cache value check")
+	fmt.Println(c.Get("num1") == nil)
+
+	c.Set("num1", 12, 3*time.Second)
+	time.Sleep(2 * time.Second)
+
+	c.Set("num1", 34, 4*time.Second)
+	time.Sleep(2 * time.Second)
+	fmt.Println(*c.Get("num1") == 34)
 }
