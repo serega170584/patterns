@@ -2,7 +2,6 @@ package ratecounter
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -43,15 +42,12 @@ func (rc *RateCounter) ExecCalc(ctx context.Context) {
 			select {
 			case <-ticker.C:
 				func() {
-					fmt.Println("tick")
 					rc.mu.Lock()
 					defer rc.mu.Unlock()
 					sum := rc.calcSum()
 
 					if sum > rc.threshold {
-						fmt.Println("Alerts write start")
 						rc.alertCh <- sum
-						fmt.Println("Alerts write end")
 					}
 
 					if uint64(len(rc.cnt)) < rc.intervalCnt {
@@ -63,7 +59,6 @@ func (rc *RateCounter) ExecCalc(ctx context.Context) {
 						rc.cnt[i-1] = rc.cnt[i]
 					}
 					rc.cnt[len(rc.cnt)-1] = 0
-					fmt.Println("Tick end")
 				}()
 			case <-ctx.Done():
 				return
@@ -86,7 +81,6 @@ func (rc *RateCounter) calcSum() uint64 {
 }
 
 func (rc *RateCounter) Add() {
-	fmt.Println("Add")
 	rc.mu.Lock()
 	atomic.AddUint64(&rc.cnt[len(rc.cnt)-1], 1)
 	rc.mu.Unlock()

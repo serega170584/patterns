@@ -21,7 +21,7 @@ func main() {
 
 	go func() {
 		for range 29 {
-			for range rand.Intn(400) {
+			for range rand.Intn(200) {
 				rc.Add()
 			}
 			time.Sleep(time.Second)
@@ -30,5 +30,6 @@ func main() {
 
 	for v := range rc.GetAlertsChannel() {
 		fmt.Printf("Alert: %d errors", v)
+		fmt.Println()
 	}
 }
