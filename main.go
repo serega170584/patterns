@@ -8,6 +8,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"patterns/cache"
+	"patterns/fastsearcher"
 	"patterns/ratecounter"
 	"time"
 )
@@ -63,4 +64,22 @@ func main() {
 	c.Set("num1", 34, 4*time.Second)
 	time.Sleep(2 * time.Second)
 	fmt.Println(*c.Get("num1") == 34)
+
+	fastSearcher := fastsearcher.NewFastSearcher([]string{
+		"https://www.google.com",
+		"https://ya.ru",
+		"https://www.pik.ru",
+		"https://www.avito.ru",
+		"https://www.ozon.ru",
+		"https://vk.com",
+		"https://booking.com",
+		"https://ctc.ru",
+		"https://www.1tv.ru",
+		"https://www.okko.tv",
+	})
+
+	fmt.Println("Fastest site")
+	s := fastSearcher.Search()
+	fmt.Printf("Site %s", s.GetUrl())
+	fmt.Printf("Duration %s", s.GetDuration().String())
 }
