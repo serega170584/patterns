@@ -7,11 +7,24 @@ import (
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
+	"patterns/adapter"
 	"patterns/cache"
 	"patterns/fastsearcher"
 	"patterns/ratecounter"
+	"strconv"
+	"sync"
 	"time"
 )
+
+type Test struct {
+	data []byte
+}
+
+func (t Test) SetData(data []byte) {
+	t.data = data
+}
+
+const workersCnt = 30
 
 func main() {
 	go func() {
@@ -82,4 +95,53 @@ func main() {
 	s := fastSearcher.Search()
 	fmt.Printf("Site %s", s.GetUrl())
 	fmt.Printf("Duration %s", s.GetDuration().String())
+	fmt.Println()
+
+	fmt.Println("Adapter start")
+	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Second)
+	adapterCh := make(chan struct{})
+	adapterOut := make(chan int)
+	go func() {
+		for i := 0; i < 300000; i++ {
+			adapterCh <- struct{}{}
+		}
+		close(adapterCh)
+	}()
+	var wg sync.WaitGroup
+	wg.Add(workersCnt)
+	for i := 0; i < workersCnt; i++ {
+		go func() {
+			defer wg.Done()
+			for range adapterCh {
+				v, err := adapter.Adapter(ctx)
+				if err != nil {
+					fmt.Printf("Adapter error %v", err)
+					fmt.Println()
+					continue
+				}
+				adapterOut <- *v
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(adapterOut)
+	}()
+
+	for v := range adapterOut {
+		fmt.Println("Adapter value " + strconv.Itoa(v))
+	}
+
+	cancel()
+
+	nextTime := time.Now().Add(2 * 60 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
+	var t Test
+	for time.Now().Before(nextTime) {
+		select {
+		case <-ticker.C:
+			t.SetData(make[])
+		}
+	}
 }
